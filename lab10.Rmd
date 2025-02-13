@@ -1,0 +1,150 @@
+---
+title: "Lab 10: Predicting house prices"
+author: "Ryan Park"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document:
+    highlight: tango
+    toc: false
+    df_print: kable
+    fig_caption: no
+    number_sections: no
+    dev: pdf
+  html_document:
+    highlight: tango
+    self_contained: true
+    theme: paper
+    toc: no
+    df_print: kable
+    fig_caption: no
+    number_sections: no
+    smart: yes
+    dev: svg
+geometry: margin=1in
+fontsize: 11pt
+documentclass: article
+---
+
+```{r setup, include = FALSE}
+# DO NOT ALTER CODE IN THIS CHUNK
+# Set knitr options
+knitr::opts_chunk$set(echo = TRUE)
+# Load required packages
+suppressPackageStartupMessages(library(tidyverse, quietly = TRUE))
+suppressPackageStartupMessages(library(modelr))
+suppressPackageStartupMessages(library(broom))
+suppressPackageStartupMessages(library(lmvar))
+# Load data
+train <- read_csv("housing_train.csv")
+test <- read_csv("housing_test.csv")
+```
+
+* * *
+
+## Lab report
+
+## Exercises
+
+#### Exercise 1
+
+```{r}
+train %>%
+  ggplot() +
+  geom_point(mapping = aes(
+    x = longitude,
+    y = latitude),
+    alpha = 0.1) +
+    labs(title = "California housing",
+         x = "Longtitude",
+         y = "Latitude")
+```
+
+A. The two regions with a large density of districts are 'Southern costal region', where sanfrancisco lies and 'Northern costal region' where Half Moon Bay lies.
+
+#### Exercise 2
+
+```{r}
+train %>%
+  ggplot() +
+  geom_point(mapping = aes(
+    x = longitude,
+    y = latitude,
+    color = median_house_value),
+    alpha = 0.1) +
+    labs(title = "Median house value of California housing",
+         x = "Longtitude",
+         y = "Latitude")
+```
+
+A. They seemed to be located at the coast side near Half Moon Bay.
+
+#### Exercise 3
+
+```{r}
+train %>%
+  pivot_longer(cols = housing_median_age:median_income,
+               names_to = "variable",
+               values_to = "value") %>%
+  ggplot() +
+  geom_point(mapping = aes(
+    x = value,
+    y = median_house_value)) +
+  facet_wrap(~variable, scales = "free") +
+  labs(title = "Median house value by variable",
+       x = "Value",
+       y = "Median house value")
+```
+
+A1. 'The median_income' has the most obvious relationship with median_house_value out of all other variables.
+
+A2. The maximum value for the response variable is 50,000, if the variable goes up beyond it, then that would be the problem because it can't be predicted beyond 50,000 and predicted value would be unable to estimate.
+
+#### Exericse 4
+
+```{r}
+train %>%
+  ggplot() +
+  geom_boxplot(mapping = aes(
+    x = ocean_proximity,
+    y = median_house_value)) +
+  labs(title = "Ocean proximity on median house value",
+       x = "Ocean proximity",
+       y = "House value")
+```
+
+A. The 'Inland' category seems to have most of its districts distributed at low median house prices.
+
+#### Exericse 5
+
+```{r}
+model_1 <- lm(median_house_value ~ median_income,
+              data = train,
+              y = TRUE,
+              x = TRUE)
+
+cv.lm(model_1, k=5)
+```
+
+A. The validation RMSE of this model is 83596.56.
+
+#### Exericse 6
+
+```{r}
+model_2 <- lm(median_house_value ~ .,
+              data = train,
+              y = TRUE,
+              x = TRUE)
+
+cv.lm(model_2, k=5)
+```
+
+A. Since the second model has a smaller Root mean squared error than the first mode we could say that the second model performs the best.
+
+#### Exericse 7
+
+```{r}
+rmse(model_2, test)
+```
+
+A. THe root mean squared error in this model is 69274.46 which is worse than the error in cross validation. The model is less accurate on the test data.
+
